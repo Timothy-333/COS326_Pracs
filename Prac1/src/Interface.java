@@ -202,21 +202,20 @@ public class Interface {
                             result.append(transaction.toString()).append("\n");
                         }
                         operationResults.setText(result.toString());
-                        
-                        // Fill the readResults table
-                        DefaultTableModel model = (DefaultTableModel) readResults.getModel();
-                        model.setRowCount(0); // Clear existing rows
+        
+                        DefaultTableModel model = new DefaultTableModel(new String[]{"Transaction ID", "Amount", "Date", "Sender", "Receiver", "Type"}, 0);
                         for (Transaction transaction : transactions) {
                             Object[] rowData = {
-                                transaction.getTransactionID(), 
-                                transaction.getAmount(), 
-                                transaction.getTransactionDate(), 
-                                transaction.getSenderAccountNumber(), 
-                                transaction.getReceiverAccountNumber(), 
+                                transaction.getTransactionID(),
+                                transaction.getAmount(),
+                                transaction.getTransactionDate(),
+                                transaction.getSenderAccountNumber(),
+                                transaction.getReceiverAccountNumber(),
                                 transaction.getTransactionType()
                             };
                             model.addRow(rowData);
                         }
+                        readResults.setModel(model);
                     } else {
                         operationResults.setText("No transactions found.");
                     }
@@ -226,19 +225,19 @@ public class Interface {
                     Transaction transaction = em.find(Transaction.class, transactionID);
                     if (transaction != null) {
                         operationResults.setText("Transaction found: " + transaction.toString());
-                        
+        
                         // Fill the readResults table with the specific transaction
-                        DefaultTableModel model = (DefaultTableModel) readResults.getModel();
-                        model.setRowCount(0); // Clear existing rows
+                        DefaultTableModel model = new DefaultTableModel(new String[]{"Transaction ID", "Amount", "Date", "Sender", "Receiver", "Type"}, 0);
                         Object[] rowData = {
-                            transaction.getTransactionID(), 
-                            transaction.getAmount(), 
-                            transaction.getTransactionDate(), 
-                            transaction.getSenderAccountNumber(), 
-                            transaction.getReceiverAccountNumber(), 
+                            transaction.getTransactionID(),
+                            transaction.getAmount(),
+                            transaction.getTransactionDate(),
+                            transaction.getSenderAccountNumber(),
+                            transaction.getReceiverAccountNumber(),
                             transaction.getTransactionType()
                         };
                         model.addRow(rowData);
+                        readResults.setModel(model);
                     } else {
                         operationResults.setText("Transaction not found.");
                     }
