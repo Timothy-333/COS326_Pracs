@@ -42,6 +42,7 @@ public class Interface {
     private JFormattedTextField deleteTransactionID;
     private JButton deleteButton;
     private JTextArea operationResults;
+    private JButton totalButton;
 
     public class DatabaseManager {
         private EntityManagerFactory emf;
@@ -67,6 +68,22 @@ public class Interface {
         saveDetailsButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                if (createAmount.getValue() == null || createAmount.getText().isEmpty() || createAmount.getValue().equals(0.0)) {
+                    operationResults.setText("Please enter a valid amount.");
+                    return;
+                }
+                if (createSenderAccountNumber.getText().isEmpty() || createSenderAccountNumber.getText().equals("Sender Account Number")) {
+                    operationResults.setText("Please enter a sender account number.");
+                    return;
+                }
+                if (createReceiverAccountNumber.getText().isEmpty() || createReceiverAccountNumber.getText().equals("Receiver Account Number")) {
+                    operationResults.setText("Please enter a receiver account number.");
+                    return;
+                }
+                if(createTransactionDate.getValue() == null) {
+                    operationResults.setText("Please enter a valid date.");
+                    return;
+                }
                 createTransaction();
             }
         });
@@ -81,6 +98,10 @@ public class Interface {
         updateButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                if(updateTransactionID.getText().isEmpty() || updateTransactionID.getText().equals("Transaction ID")) {
+                    operationResults.setText("Please enter a valid transaction ID.");
+                    return;
+                }
                 updateTransaction();
             }
         });
@@ -88,7 +109,39 @@ public class Interface {
         deleteButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                deleteTransaction();
+                if (deleteTransactionID.getText().isEmpty() || deleteTransactionID.getText().equals("Transaction ID")) {
+                    operationResults.setText("Please enter a valid transaction ID.");
+                    return;
+                }
+                try {
+                    long transactionID = Long.parseLong(deleteTransactionID.getText());
+                    deleteTransaction();
+                } catch (NumberFormatException ex) {
+                    operationResults.setText("Invalid transaction ID format.");
+                }
+            }
+        });
+        totalButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                DatabaseManager dbManager = new DatabaseManager();
+                EntityManager em = dbManager.getEntityManager();
+                try {
+                    // Check if there are any records in the database
+                    long count = em.createQuery("SELECT COUNT(t) FROM Transaction t", Long.class).getSingleResult();
+                    if (count == 0) {
+                        operationResults.setText("No transactions found in the database.");
+                        return;
+                    }
+        
+                    // Calculate the total amount
+                    double total = em.createQuery("SELECT SUM(t.amount) FROM Transaction t", Double.class).getSingleResult();
+                    operationResults.setText("Total amount: " + total);
+                } catch (Exception ex) {
+                    operationResults.setText("Error calculating total: " + ex.getMessage());
+                } finally {
+                    dbManager.close();
+                }
             }
         });
         
@@ -187,69 +240,52 @@ public class Interface {
             dbManager.close();
         }
     }
-        private void readTransaction() {
-            DatabaseManager dbManager = new DatabaseManager();
-            EntityManager em = dbManager.getEntityManager();
-        
-            try {
-                String transactionIDStr = readTransactionID.getText();
-                if (transactionIDStr == null || transactionIDStr.equals("Transaction ID") || transactionIDStr.trim().isEmpty()) {
-                    // No transaction ID entered, return all transactions
-                    List<Transaction> transactions = em.createQuery("SELECT t FROM Transaction t", Transaction.class).getResultList();
-                    if (!transactions.isEmpty()) {
-                        StringBuilder result = new StringBuilder("Transactions found:\n");
-                        for (Transaction transaction : transactions) {
-                            result.append(transaction.toString()).append("\n");
-                        }
-                        operationResults.setText(result.toString());
-        
-                        DefaultTableModel model = new DefaultTableModel(new String[]{"Transaction ID", "Amount", "Date", "Sender", "Receiver", "Type"}, 0);
-                        for (Transaction transaction : transactions) {
-                            Object[] rowData = {
-                                transaction.getTransactionID(),
-                                transaction.getAmount(),
-                                transaction.getTransactionDate(),
-                                transaction.getSenderAccountNumber(),
-                                transaction.getReceiverAccountNumber(),
-                                transaction.getTransactionType()
-                            };
-                            model.addRow(rowData);
-                        }
-                        readResults.setModel(model);
-                    } else {
-                        operationResults.setText("No transactions found.");
-                    }
-                } else {
-                    // Transaction ID entered, find specific transaction
-                    Long transactionID = Long.parseLong(transactionIDStr);
-                    Transaction transaction = em.find(Transaction.class, transactionID);
-                    if (transaction != null) {
-                        operationResults.setText("Transaction found: " + transaction.toString());
-        
-                        // Fill the readResults table with the specific transaction
-                        DefaultTableModel model = new DefaultTableModel(new String[]{"Transaction ID", "Amount", "Date", "Sender", "Receiver", "Type"}, 0);
-                        Object[] rowData = {
-                            transaction.getTransactionID(),
-                            transaction.getAmount(),
-                            transaction.getTransactionDate(),
-                            transaction.getSenderAccountNumber(),
-                            transaction.getReceiverAccountNumber(),
-                            transaction.getTransactionType()
-                        };
-                        model.addRow(rowData);
-                        readResults.setModel(model);
-                    } else {
-                        operationResults.setText("Transaction not found.");
-                    }
-                }
-            } catch (Exception ex) {
-                operationResults.setText("Error reading transaction: " + ex.getMessage());
-            } finally {
-                dbManager.close();
+    private void readTransaction() {
+        DatabaseManager dbManager = new DatabaseManager();
+        EntityManager em = dbManager.getEntityManager();
+    
+        try {
+            String transactionIDStr = readTransactionID.getText();
+            DefaultTableModel model = new DefaultTableModel(new String[]{"Transaction ID", "Amount", "Date", "Sender", "Receiver", "Type"}, 0);
+            List<Transaction> transactions;
+    
+            if (transactionIDStr == null || transactionIDStr.equals("Transaction ID") || transactionIDStr.trim().isEmpty()) {
+                // No transaction ID entered, return all transactions
+                transactions = em.createQuery("SELECT t FROM Transaction t", Transaction.class).getResultList();
+            } else {
+                // Transaction ID entered, find specific transaction
+                Long transactionID = Long.parseLong(transactionIDStr);
+                Transaction transaction = em.find(Transaction.class, transactionID);
+                transactions = transaction != null ? List.of(transaction) : List.of();
             }
+    
+            if (!transactions.isEmpty()) {
+                StringBuilder result = new StringBuilder("Transactions found:\n");
+                for (Transaction transaction : transactions) {
+                    result.append(transaction.toString()).append("\n");
+                    Object[] rowData = {
+                        transaction.getTransactionID(),
+                        transaction.getAmount(),
+                        transaction.getTransactionDate(),
+                        transaction.getSenderAccountNumber(),
+                        transaction.getReceiverAccountNumber(),
+                        transaction.getTransactionType()
+                    };
+                    model.addRow(rowData);
+                }
+                operationResults.setText(result.toString());
+                readResults.setModel(model);
+            } else {
+                operationResults.setText(transactionIDStr == null || transactionIDStr.equals("Transaction ID") || transactionIDStr.trim().isEmpty() ? "No transactions found." : "Transaction not found.");
+            }
+        } catch (Exception ex) {
+            operationResults.setText("Error reading transaction: " + ex.getMessage());
+        } finally {
+            dbManager.close();
         }
+    }
 
-        private void updateTransaction() {
+    private void updateTransaction() {
         DatabaseManager dbManager = new DatabaseManager();
         EntityManager em = dbManager.getEntityManager();
 
@@ -258,11 +294,16 @@ public class Interface {
             Transaction transaction = em.find(Transaction.class, transactionID);
             if (transaction != null) {
                 em.getTransaction().begin();
-                transaction.setAmount(((Number) updateAmount.getValue()).doubleValue());
-                transaction.setTransactionDate((Date) updateTransactionDate.getValue());
-                transaction.setSenderAccountNumber(updateSenderAccNum.getText());
-                transaction.setReceiverAccountNumber(updateReceiverAccNum.getText());
-                transaction.setTransactionType((String) updateTransactionType.getSelectedItem());
+                if(updateAmount.getValue() != null && !updateAmount.getText().isEmpty() && !updateAmount.getValue().equals(0.0))
+                    transaction.setAmount(((Number) updateAmount.getValue()).doubleValue());
+                if(updateTransactionDate.getValue() != null)
+                    transaction.setTransactionDate((Date) updateTransactionDate.getValue());
+                if(!updateSenderAccNum.getText().isEmpty() && !updateSenderAccNum.getText().equals("Sender Account Number"))
+                    transaction.setSenderAccountNumber(updateSenderAccNum.getText());
+                if(!updateReceiverAccNum.getText().isEmpty() && !updateReceiverAccNum.getText().equals("Receiver Account Number"))
+                    transaction.setReceiverAccountNumber(updateReceiverAccNum.getText());
+                if(updateTransactionType.getSelectedItem() != null)
+                    transaction.setTransactionType((String) updateTransactionType.getSelectedItem());
                 em.getTransaction().commit();
                 operationResults.setText("Transaction updated successfully.");
             } else {
