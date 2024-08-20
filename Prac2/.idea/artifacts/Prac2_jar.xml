@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="Prac2:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/Prac2_jar</output-path>
+    <root id="archive" name="Prac2.jar">
+      <element id="module-output" name="Prac2" />
+      <element id="extracted-dir" path="$USER_HOME$/Downloads/objectdb-2.9.0/objectdb-2.9.0/bin/objectdb.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
