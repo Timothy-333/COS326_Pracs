@@ -1,1 +1,0 @@
-CREATE TYPE titleEnum AS ENUM ('Ms', 'Mev', 'Miss', 'Mrs', 'Mr', 'Mnr', 'Dr', 'Prof');
