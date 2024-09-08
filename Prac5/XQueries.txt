@@ -1,0 +1,41 @@
+//musician/name/text()
+
+//musician[name='Billy Talent']/albums/album
+
+//musician[albums/album[text()='Lateralus']]/name/text()
+
+//musician[contains(genre, 'Pop')]/name/text()
+
+//musician[@type='solo']/name/text()
+
+//musician[@type='solo'][2]/(name|genre)/text()
+
+//musician[name='Ben Folds']/albums/album[4]/text()
+
+//album[@year >= 2008]/text()
+
+for $musician in //musician
+let $name := $musician/name/text()
+let $albums := $musician/albums/album
+let $firstYear := min($albums/@year)
+let $lastYear := max($albums/@year)
+let $numAlbums := count($albums)
+let $rate := round-half-to-even(($lastYear - $firstYear + 1) div $numAlbums * 100) div 100
+order by $rate ascending
+return
+    concat($name, ': ', $rate)
+
+for $musician in //musician
+let $name := $musician/name/text()
+let $albums := $musician/albums/album
+let $numAlbums := count($albums)
+let $firstAlbum := $albums[1]
+let $lastAlbum := $albums[$numAlbums]
+order by $numAlbums descending
+return
+    concat(
+        $name, ': ',
+        'Total Albums: ', $numAlbums, ', ',
+        'First Album: ', $firstAlbum/text(), ' (', $firstAlbum/@year, '), ',
+        'Last Album: ', $lastAlbum/text(), ' (', $lastAlbum/@year, ')'
+    )
