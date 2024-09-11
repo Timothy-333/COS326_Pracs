@@ -1,0 +1,79 @@
+for $student in //student
+for $course in //course
+let $name := $student/name
+where $course/name = "Database Systems" and $student/enrollments/course/@code = $course/code
+return
+    $name
+
+let $students := 
+    for $student in //student
+    for $course in //course
+    let $name := $student/name
+    where $course/name = "Discrete Structures" and $student/enrollments/course/@code = $course/code
+    return $course
+return
+    <course>
+        <name>Database Systems</name>
+        <total_count>{count($students)}</total_count>
+    </course>
+
+for $course in //course
+let $name := $course/name
+where $course/department = "Mathematics"
+return $name
+
+for $course in //course
+for $student in //student
+let $instructor := $course/instructor
+where $student/name = "Marijke Jooste" and $student/enrollments/course/@code = $course/code
+return $instructor
+
+for $course in //course
+where $course/credits = 18
+return $course/code
+
+for $student in //student
+let $enrolledCourses := $student/enrollments/course/@code
+let $courseNames := for $course in //course 
+                    where $course/code = $enrolledCourses 
+                    return $course/name
+where 
+    "Introduction to Computer Science" = $courseNames and 
+    "Mathematics 124" = $courseNames
+return $student/name
+
+for $student in //student
+let $enrolledCourses := $student/enrollments/course/@code
+let $mathCourses := 
+    for $course in //course 
+    where $course/code = $enrolledCourses and $course/department = "Mathematics"
+    return $course
+where empty($mathCourses)
+return $student/name
+
+for $course in //course
+let $studentsInCourse := 
+    for $student in //student 
+    where $course/code = $student/enrollments/course/@code
+    return $student
+where count($studentsInCourse) > 3
+return $course/name
+
+for $course in //course
+let $studentsInCourse := 
+    for $student in //student 
+    where $course/code = $student/enrollments/course/@code
+    return $student
+where count($studentsInCourse) > 2
+return $course/instructor
+
+for $student in //student
+let $enrolledFirstYearCourses := 
+    for $course in //course
+    where substring($course/code, 4, 1) = '1'
+    and $course/department = "Computer Science"
+    and $course/code = $student/enrollments/course/@code
+    return $course
+where count($enrolledFirstYearCourses) > 0
+order by $student/name descending
+return $student/name
