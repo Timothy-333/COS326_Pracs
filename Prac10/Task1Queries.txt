@@ -1,0 +1,13 @@
+LOAD CSV WITH HEADERS FROM 'file:///actors.csv' AS row
+CREATE (:Actor {id: row.id, name: row.name});
+
+MATCH (n) RETURN n;
+
+LOAD CSV WITH HEADERS FROM 'file:///movies.csv' AS row
+MERGE (:Movie {id: row.movie_id, title: row.movie_title});
+
+LOAD CSV WITH HEADERS FROM 'file:///movies.csv' AS row
+MATCH (a:Actor {id: row.actor_id}), (m:Movie {id: row.movie_id})
+CREATE (a)-[:ACTED_IN {role: row.role}]->(m);
+
+MATCH (n) RETURN n;
