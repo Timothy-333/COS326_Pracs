@@ -1,0 +1,40 @@
+// 1. Path and Other Queries
+
+// a) Find incidents that are 1 or 2 links away from APT29
+MATCH (ta:ThreatActor {name: 'APT29'})-[:LAUNCHED*1..2]->(i:Incident)
+RETURN DISTINCT i;
+
+// b) Show the nodes in the shortest path from the threat actor 'APT29' to the strategy 'User Awareness Training'
+MATCH p=shortestPath((ta:ThreatActor {name: 'APT29'})-[*]-(s:Strategy {name: 'User Awareness Training'}))
+RETURN nodes(p);
+
+// c) Report whether each incident has an associated mitigation strategy
+MATCH (i:Incident)
+OPTIONAL MATCH (i)-[:MITIGATED_BY]->(s:Strategy)
+RETURN i.type, CASE WHEN s IS NOT NULL THEN 'Has Mitigation' ELSE 'No Mitigation' END AS mitigation_status;
+
+// d) For all paths of length 2, list the node names and path length
+MATCH p=()-[r*2]->()
+RETURN [n IN nodes(p) | n.name] AS node_names, length(p) AS path_length;
+
+// 2. Aggregation Queries
+
+// a) Count the number of nodes in the graph
+MATCH (n)
+RETURN COUNT(n) AS node_count;
+
+// b) Count the number of incidents launched by each threat actor
+MATCH (ta:ThreatActor)-[:LAUNCHED]->(i:Incident)
+RETURN ta.name, COUNT(i) AS incident_count
+ORDER BY incident_count DESC;
+
+// c) Count the number of mitigation strategies applied to each incident
+MATCH (i:Incident)-[:MITIGATED_BY]->(s:Strategy)
+RETURN i.type AS incident_type, COUNT(DISTINCT s) AS strategy_count
+ORDER BY strategy_count DESC;
+
+// d) Identify the threat actor responsible for the most incidents
+MATCH (ta:ThreatActor)-[:LAUNCHED]->(i:Incident)
+RETURN ta.name, COUNT(i) AS incident_count
+ORDER BY incident_count DESC
+LIMIT 1;

@@ -1,0 +1,48 @@
+// Connect to the Neo4j database
+// Create ThreatActor nodes
+CREATE (ta1:ThreatActor {name: 'APT29', origin: 'Russia', motivation: 'Espionage'});
+CREATE (ta2:ThreatActor {name: 'Lazarus Group', origin: 'North Korea', motivation: 'Financial Gain'});
+
+// Create Incident nodes
+CREATE (i1:Incident {type: 'Phishing Campaign', severity: 'High'});
+CREATE (i2:Incident {type: 'Ransomware Attack', severity: 'Critical'});
+
+// Create Strategy nodes
+CREATE (s1:Strategy {name: 'User Awareness Training', type: 'Preventive'});
+CREATE (s2:Strategy {name: 'Network Segmentation', type: 'Containment'});
+
+// Create relationships with properties
+MATCH (ta1:ThreatActor {name: 'APT29'}), (i1:Incident {type: 'Phishing Campaign'})
+CREATE (ta1)-[:LAUNCHED {date: '2023-09-01'}]->(i1);
+
+MATCH (ta2:ThreatActor {name: 'Lazarus Group'}), (i2:Incident {type: 'Ransomware Attack'})
+CREATE (ta2)-[:LAUNCHED {date: '2023-07-15'}]->(i2);
+
+MATCH (i1:Incident {type: 'Phishing Campaign'}), (s1:Strategy {name: 'User Awareness Training'})
+CREATE (i1)-[:MITIGATED_BY {effectiveness: 85}]->(s1);
+
+MATCH (i2:Incident {type: 'Ransomware Attack'}), (s2:Strategy {name: 'Network Segmentation'})
+CREATE (i2)-[:MITIGATED_BY {effectiveness: 90}]->(s2);
+
+CALL db.labels();
+
+MATCH (ta:ThreatActor)
+RETURN ta.name
+ORDER BY ta.name;
+
+MATCH (i:Incident)
+RETURN i.type, i.severity
+ORDER BY i.severity DESC;
+
+CALL db.relationshipTypes();
+
+MATCH (ta:ThreatActor)-[:LAUNCHED]->(i:Incident)
+RETURN ta.name, i.type;
+
+MATCH (i:Incident)-[:MITIGATED_BY]->(s:Strategy)
+RETURN i.type, s.name;
+
+MATCH (i:Incident)-[r:MITIGATED_BY]->(s:Strategy)
+RETURN s.name, r.effectiveness
+ORDER BY r.effectiveness DESC
+LIMIT 1;
